@@ -14,8 +14,6 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("me/", ManageUserView.as_view(), name="manage"),
-    path("users/<int:pk>/followers/", ManageUserView.as_view(), name="manage"),
-    path("users/<int:pk>/following/", ManageUserView.as_view(), name="manage"),
 ]
 
 app_name = "user"

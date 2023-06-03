@@ -1,8 +1,10 @@
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.views import generic
-from rest_framework import viewsets, generics, status, serializers, request
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import viewsets, generics, status, serializers, request, filters
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,9 +20,11 @@ from app.serializers import (
     LikedPostsSerializer,
     PostCreateSerializer,
     PostUpdateSerializer,
-    ProfileNoPostSerializer, CommentCreateSerializer, ProfileCreateSerializer
+    ProfileNoPostSerializer, CommentCreateSerializer, ProfileCreateSerializer, ProfileSearchSerializer
 )
 from rest_framework.permissions import BasePermission
+
+from pagination import PyNetListPagination
 
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -39,7 +43,7 @@ class IsUserOrReadOnly(BasePermission):
 
 
 class HasProfilePermission(BasePermission):
-    message = "User has no profile."
+    message = "User has no profile. Create profile, please."
 
     def has_permission(self, request, view):
         user = request.user
@@ -50,11 +54,16 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = (IsOwnerOrReadOnly, HasProfilePermission)
     queryset = Post.objects.all().select_related("owner")
+    pagination_class = PyNetListPagination
+    """Endpoint to search post by  hashtags"""
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['content']
 
     def get_queryset(self):
         user = self.request.user
         following_profiles = user.profile.following.all()
-        queryset = Post.objects.filter(profile__in=following_profiles) | Post.objects.filter(profile=user.profile)
+        queryset = Post.objects.filter(profile__in=following_profiles).select_related(
+            "owner") | Post.objects.filter(profile=user.profile)
         if self.action == "list" and self.request.method == "retrieve":
             profile_pk = self.kwargs["profile_pk"]
             return queryset.filter(profile_id=profile_pk)
@@ -77,6 +86,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
 
 class PostLikeCreateView(generics.CreateAPIView):
+    """Endpoint for create postlike"""
     serializer_class = PostLikeSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -98,8 +108,9 @@ class PostLikeCreateView(generics.CreateAPIView):
 
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
-    queryset = Profile.objects.all()
-    permission_classes = (IsUserOrReadOnly,)
+    queryset = Profile.objects.all().select_related("user")
+    permission_classes = (IsUserOrReadOnly, HasProfilePermission)
+    pagination_class = PyNetListPagination
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -115,15 +126,18 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return ProfileCreateSerializer
         if self.action == "follow":
             return ProfileFollowAddSerializer
-        if self.action == 'retrieve' and self.request.user.is_authenticated:
+        if self.action in ['retrieve'] and self.request.user.is_authenticated:
             profile = self.get_object()
             follower = self.request.user.profile
-            if profile.followings.filter(id=follower.id).exists():
+            if profile.followings.filter(id=follower.id).exists() or profile == follower:
                 return ProfileSerializer
-        return ProfileNoPostSerializer
+            return ProfileNoPostSerializer
+
+        return ProfileSerializer
 
     @action(detail=True, methods=["post"])
     def follow(self, request, pk=None):
+        """Endpoint to join the profile followers"""
         profile = self.get_object()
         following = request.user.profile
         profile.followings.add(following)
@@ -132,6 +146,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def followers_list(self, request, pk=None):
+        """Endpoint to get the list of followers"""
         user = self.get_object()
         followers = user.followings.all()
         serializer = ProfileSerializer(followers, many=True)
@@ -139,43 +154,37 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def following_list(self, request, pk=None):
+        """Endpoint to get the list of following"""
         profile = self.get_object()
         following = profile.following.all()
         serializer = ProfileSerializer(following, many=True)
         return Response(serializer.data)
 
 
-# class ProfileCreateView(generic.CreateView):
-#     serializer_class = ProfileSerializer
-#     permission_classes = (IsAuthenticated,)
-#
-    # def perform_create(self, serializer):
-    #     user = self.request.user
-    #     username = self.request.data.get("username")
-    #     city = self.request.data.get("city")
-    #     birth_date = self.request.data.get("birth_date")
-    #     serializer.save(user=user, username=username,city=city, birth_day=birth_date)
-#
-#
-#     def post(self, request, *args, **kwargs):
-#         serializer_class = self.get_serializer_class()
-#         serializer = serializer_class(data=request.data, context={"request": request})
-#         serializer.is_valid(raise_exception=True)
-#         self.perform_create(serializer)
-#         headers = self.get_success_headers(serializer.data)
-#         return Response(
-#             serializer.data, status=status.HTTP_201_CREATED, headers=headers
-#         )
-
-
 class ProfileSearchView(generics.ListAPIView):
-    serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticated,)
+    serializer_class = ProfileSearchSerializer
+    permission_classes = (IsAuthenticated, HasProfilePermission)
     lookup_field = "username"
 
     def get_queryset(self):
         username = self.kwargs["username"]
-        return Profile.objects.filter(user__profile__username__icontains=username)
+        return Profile.objects.filter(
+            user__profile__username__icontains=username
+        ).select_related("user")
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="username",
+                type={"type": "string"},
+                description="Permissions only for user, who authenticated,"
+                            " (ex. api/profile/An  return profile of user whose username consists An)",
+                required=False,
+            ),
+        ],
+    )
+    def get(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class CommentCreateView(generics.CreateAPIView):
@@ -195,15 +204,16 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     queryset = Comment.objects.all().select_related("user")
     permission_classes = [IsUserOrReadOnly]
+    pagination_class = PyNetListPagination
 
     def get_queryset(self):
-        queryset = Comment.objects.all()
-        return queryset.filter(user=self.request.user)
+        return Comment.objects.filter(user=self.request.user)
 
 
 class LikedPostsView(generics.ListAPIView):
     serializer_class = LikedPostsSerializer
     permission_classes = (IsAuthenticated,)
+    pagination_class = PyNetListPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -211,6 +221,7 @@ class LikedPostsView(generics.ListAPIView):
             Q(author=user),
             Q(status=PostLike.StatusChoices.LIKE)
             | Q(status=PostLike.StatusChoices.UNLIKE),
-        )
+        ).select_related("post")
+
         liked_posts = [post_like.post for post_like in post_likes]
         return liked_posts

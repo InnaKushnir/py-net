@@ -107,7 +107,7 @@ templates/registration/login.html
 ../py-move-file/
 ../py-movie-api/
 ../py-music-school/
-
+.env
 ../py-online-course/
 ../py-restaurant-data-analysis/
 ../py-scrape-books/

@@ -53,28 +53,11 @@ class PostSerializer(serializers.ModelSerializer):
     def get_unlikes_count(self, obj):
         return obj.postlikes.filter(status=PostLike.StatusChoices.UNLIKE).count()
 
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     user = self.context["request"].user
-    #
-    #     if user.is_authenticated and user.profile and user.profile.is_allowed:
-    #         return representation
-    #     else:
-    #         representation["content"] = "Access denied"
-    #         return representation
-
-    # def validate(self, attrs):
-    #     data = super(PostSerializer, self).validate(attrs)
-    #
-    #     user = attrs["user"]
-    #     if not user.profile:
-    #         raise serializers.ValidationError("Please, create profile")
-
 
 class PostUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ("id", "title", "content")
+        fields = ("id", "title", "content", "image")
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
@@ -118,14 +101,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             "is_following",
         ]
 
-    # def validate(self, attrs):
-    #     user = self.context["request"].user
-    #
-    #     if Profile.objects.filter(user=user).exists():
-    #         raise serializers.ValidationError("Profile already exist.")
-    #
-    #     return attrs
-
     def get_followers_count(self, obj):
         return obj.followings.count()
 
@@ -135,6 +110,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             user = request.user
             return obj.followings.filter(id=user.profile.id).exists()
         return False
+
+
+class ProfileSearchSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Profile
+        fields = ["id", "username"]
 
 
 class ProfileNoPostSerializer(serializers.ModelSerializer):
@@ -151,13 +133,6 @@ class ProfileNoPostSerializer(serializers.ModelSerializer):
             "followers_count",
         ]
 
-    # def validate(self, attrs):
-    #     user = self.context["request"].user
-    #
-    #     if Profile.objects.filter(user=user).exists():
-    #         raise serializers.ValidationError("Profile already exist.")
-    #
-    #     return attrs
 
     def get_followers_count(self, obj):
         return obj.followings.count()

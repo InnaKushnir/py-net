@@ -34,7 +34,11 @@ urlpatterns = [
         CommentCreateView.as_view(),
         name="comment-create",
     ),
-    path("posts/liked/", LikedPostsView.as_view(), name="liked-posts"),
+    path(
+        "posts/liked/",
+        LikedPostsView.as_view(),
+        name="liked-posts"
+    ),
     path(
         "profile/<int:profile_pk>/follow/",
         ProfileViewSet.as_view({"post": "follow"}),
