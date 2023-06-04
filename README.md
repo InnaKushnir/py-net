@@ -11,8 +11,8 @@ RESTful API for a social media platform.
 * Users can like and unlike posts, view the list of posts they have liked, add comments to posts and view comments on posts.
 * The API allows to schedule Post creation,to select the time to create the Post before creating of it.
 * The API allows only users who have a profile to create posts, comment on posts, and like posts. Implemented the ability to see the posts of only the user whose profile is subscribed to.
-* The API allows you to use the Swagger documentation.
-* 
+* The API allows to use the Swagger documentation.
+
 
 #### Installation
 ##### Python3 must be already installed.
