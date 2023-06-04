@@ -1,5 +1,6 @@
-from app.models import Post, Profile, User
 from celery import shared_task
+
+from app.models import Post, Profile, User
 
 TITLE = "TEST!!!"
 CONTENT = "Test Post"

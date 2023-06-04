@@ -1,10 +1,9 @@
 import os
 import uuid
+from functools import partial
 
 from django.conf import settings
-from functools import partial
 from django.db import models
-from django.utils import timezone
 from django.utils.text import slugify
 
 from user.models import User

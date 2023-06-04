@@ -1,5 +1,3 @@
-from django.core.exceptions import ValidationError
-from django.http import HttpResponseBadRequest
 from rest_framework import serializers
 
 from app.models import Post, PostLike, Profile, Comment

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("app", "0008_profile_username_alter_postlike_unique_together"),
     ]

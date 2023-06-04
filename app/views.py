@@ -1,14 +1,11 @@
-from django.db.models import Q, Count
-from django.http import HttpResponseBadRequest
-from django.shortcuts import render, get_object_or_404
-from django.views import generic
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import viewsets, generics, status, serializers, request, filters
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, generics, filters
 from rest_framework.decorators import action
+from rest_framework.permissions import BasePermission
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 
 from app.models import Post, PostLike, Profile, Comment
 from app.serializers import (
@@ -25,8 +22,6 @@ from app.serializers import (
     ProfileCreateSerializer,
     ProfileSearchSerializer,
 )
-from rest_framework.permissions import BasePermission
-
 from pagination import PyNetListPagination
 
 
@@ -134,8 +129,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
             profile = self.get_object()
             follower = self.request.user.profile
             if (
-                profile.followings.filter(id=follower.id).exists()
-                or profile == follower
+                    profile.followings.filter(id=follower.id).exists()
+                    or profile == follower
             ):
                 return ProfileSerializer
             return ProfileNoPostSerializer
@@ -185,7 +180,7 @@ class ProfileSearchView(generics.ListAPIView):
                 name="username",
                 type={"type": "string"},
                 description="Permissions only for user, who authenticated,"
-                " (ex. api/profile/An  return profile of user whose username consists An)",
+                            " (ex. api/profile/An  return profile of user whose username consists An)",
                 required=False,
             ),
         ],

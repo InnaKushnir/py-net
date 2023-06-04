@@ -18,11 +18,12 @@ RESTful API for a social media platform.
 ##### Python3 must be already installed.
 ```
 git clone https://github.com/InnaKushnir/py-net/
+cd py-net
 python -m venv venv
 venv/Scripts/activate
 pip install -r requirements.txt
 ```
-* Create new Postgres DB & user
+* Create new SQLite DB & user
 * Copy .env.sample -> .env and populate with all required data
 ##### Create .env file with values:
 ```
@@ -30,14 +31,24 @@ SECRET_KEY = <YOUR_SECRET_KEY>
 CELERY_BROKER_URL = <YOUR_CELERY_BROKER_URL>
 CELERY_RESULT_BACKEND = <YOUR_CELERY_RESULT_BACKEND>
 ```
-
+#### Run the following necessary commands
 ```
 python manage.py migrate
+```
+* Docker is used to run a Redis container that is used as a broker for Celery.
+```
 docker run -d -p 6379:6379 redis
+```
+The Celery library is used to schedule tasks and launch workers.
+* Starting the Celery worker is done with the command.
+```
 celery -A py_net worker -l INFO -P solo
+```
+* The Celery scheduler is configured as follows.
+```
 celery -A py_net beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
-* Create schedule for running sync in DB
+* Create schedule for running sync in DB.
 ```
 python manage.py runserver
 ```

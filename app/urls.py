@@ -1,6 +1,6 @@
-from IPython.core.profileapp import ProfileCreate
 from django.urls import include, path
 from rest_framework import routers
+
 from app.views import (
     PostViewSet,
     PostLikeCreateView,
@@ -15,7 +15,6 @@ router = routers.DefaultRouter()
 router.register("profile", ProfileViewSet)
 router.register("post", PostViewSet)
 router.register("comment", CommentViewSet)
-
 
 urlpatterns = [
     path("", include(router.urls)),
