@@ -6,17 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0018_comment'),
+        ("app", "0018_comment"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='profile',
-            name='followers',
+            model_name="profile",
+            name="followers",
         ),
         migrations.AddField(
-            model_name='profile',
-            name='following',
-            field=models.ManyToManyField(related_name='followings', to='app.profile'),
+            model_name="profile",
+            name="following",
+            field=models.ManyToManyField(related_name="followings", to="app.profile"),
         ),
     ]

@@ -22,7 +22,11 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ("id", "owner", "content", )
+        fields = (
+            "id",
+            "owner",
+            "content",
+        )
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -45,7 +49,6 @@ class PostSerializer(serializers.ModelSerializer):
             "unlikes_count",
             "created_time",
         )
-
 
     def get_likes_count(self, obj):
         return obj.postlikes.filter(status=PostLike.StatusChoices.LIKE).count()
@@ -105,7 +108,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         return obj.followings.count()
 
     def get_is_following(self, obj):
-        request = self.context.get('request')
+        request = self.context.get("request")
         if request and request.user.is_authenticated:
             user = request.user
             return obj.followings.filter(id=user.profile.id).exists()
@@ -113,7 +116,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class ProfileSearchSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Profile
         fields = ["id", "username"]
@@ -133,12 +135,11 @@ class ProfileNoPostSerializer(serializers.ModelSerializer):
             "followers_count",
         ]
 
-
     def get_followers_count(self, obj):
         return obj.followings.count()
 
     def get_is_following(self, obj):
-        request = self.context.get('request')
+        request = self.context.get("request")
         if request and request.user.is_authenticated:
             user = request.user
             return obj.followings.filter(id=user.profile.id).exists()
@@ -163,7 +164,7 @@ class ProfileFollowAddSerializer(serializers.ModelSerializer):
         return None
 
     def get_is_following(self, obj):
-        user = self.context['request'].user
+        user = self.context["request"].user
         return obj.followings.filter(id=user.profile.id).exists()
 
     class Meta:

@@ -1,4 +1,3 @@
-
 from app.models import Post, Profile, User
 from celery import shared_task
 
@@ -11,4 +10,6 @@ USER_ID = 2
 def create_post() -> int:
     user = User.objects.get(id=USER_ID)
     profile = Profile.objects.get(user=user)
-    return Post.objects.create(owner=user, title=TITLE, content=CONTENT, profile=profile)
+    return Post.objects.create(
+        owner=user, title=TITLE, content=CONTENT, profile=profile
+    )

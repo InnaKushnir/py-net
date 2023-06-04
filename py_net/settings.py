@@ -167,9 +167,9 @@ SIMPLE_JWT = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "Social Media API",
     "DESCRIPTION": "The API allow users to create profiles,"
-                   " follow other users, create and retrieve posts,"
-                   " manage likes and comments,"
-                   " and perform basic social media actions.",
+    " follow other users, create and retrieve posts,"
+    " manage likes and comments,"
+    " and perform basic social media actions.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SWAGGER_UI_SETTINGS": {

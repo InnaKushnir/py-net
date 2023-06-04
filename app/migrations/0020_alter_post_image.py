@@ -7,13 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0019_remove_profile_followers_profile_following'),
+        ("app", "0019_remove_profile_followers_profile_following"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='post',
-            name='image',
-            field=models.ImageField(blank=True, null=True, upload_to=app.models.post_image_file_path),
+            model_name="post",
+            name="image",
+            field=models.ImageField(
+                blank=True, null=True, upload_to=app.models.post_image_file_path
+            ),
         ),
     ]

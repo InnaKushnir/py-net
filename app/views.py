@@ -20,7 +20,10 @@ from app.serializers import (
     LikedPostsSerializer,
     PostCreateSerializer,
     PostUpdateSerializer,
-    ProfileNoPostSerializer, CommentCreateSerializer, ProfileCreateSerializer, ProfileSearchSerializer
+    ProfileNoPostSerializer,
+    CommentCreateSerializer,
+    ProfileCreateSerializer,
+    ProfileSearchSerializer,
 )
 from rest_framework.permissions import BasePermission
 
@@ -35,7 +38,6 @@ class IsOwnerOrReadOnly(BasePermission):
 
 
 class IsUserOrReadOnly(BasePermission):
-
     def has_object_permission(self, request, view, obj):
         if request.method in ["GET", "HEAD", "OPTIONS"]:
             return True
@@ -47,7 +49,7 @@ class HasProfilePermission(BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        return hasattr(user, 'profile')
+        return hasattr(user, "profile")
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -57,13 +59,14 @@ class PostViewSet(viewsets.ModelViewSet):
     pagination_class = PyNetListPagination
     """Endpoint to search post by  hashtags"""
     filter_backends = [filters.SearchFilter]
-    search_fields = ['content']
+    search_fields = ["content"]
 
     def get_queryset(self):
         user = self.request.user
         following_profiles = user.profile.following.all()
         queryset = Post.objects.filter(profile__in=following_profiles).select_related(
-            "owner") | Post.objects.filter(profile=user.profile)
+            "owner"
+        ) | Post.objects.filter(profile=user.profile)
         if self.action == "list" and self.request.method == "retrieve":
             profile_pk = self.kwargs["profile_pk"]
             return queryset.filter(profile_id=profile_pk)
@@ -87,6 +90,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
 class PostLikeCreateView(generics.CreateAPIView):
     """Endpoint for create postlike"""
+
     serializer_class = PostLikeSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -126,10 +130,13 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return ProfileCreateSerializer
         if self.action == "follow":
             return ProfileFollowAddSerializer
-        if self.action in ['retrieve'] and self.request.user.is_authenticated:
+        if self.action in ["retrieve"] and self.request.user.is_authenticated:
             profile = self.get_object()
             follower = self.request.user.profile
-            if profile.followings.filter(id=follower.id).exists() or profile == follower:
+            if (
+                profile.followings.filter(id=follower.id).exists()
+                or profile == follower
+            ):
                 return ProfileSerializer
             return ProfileNoPostSerializer
 
@@ -178,7 +185,7 @@ class ProfileSearchView(generics.ListAPIView):
                 name="username",
                 type={"type": "string"},
                 description="Permissions only for user, who authenticated,"
-                            " (ex. api/profile/An  return profile of user whose username consists An)",
+                " (ex. api/profile/An  return profile of user whose username consists An)",
                 required=False,
             ),
         ],

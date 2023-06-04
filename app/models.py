@@ -22,7 +22,10 @@ class Profile(models.Model):
     )
     username = models.CharField(max_length=63, blank=False, unique=True)
     avatar = models.ImageField(
-        "Avatar", blank=True, null=True, upload_to=partial(post_image_file_path, "profiles")
+        "Avatar",
+        blank=True,
+        null=True,
+        upload_to=partial(post_image_file_path, "profiles"),
     )
     city = models.CharField(max_length=63, blank=True, null=True)
     birth_date = models.CharField(max_length=63, blank=True, null=True)
@@ -47,8 +50,9 @@ class Post(models.Model):
     )
     title = models.CharField(max_length=255)
     content = models.TextField()
-    image = models.ImageField(blank=True, null=True,
-                              upload_to=partial(post_image_file_path, "posts"))
+    image = models.ImageField(
+        blank=True, null=True, upload_to=partial(post_image_file_path, "posts")
+    )
     video = models.FileField(blank=True, null=True)
     created_time = models.DateTimeField(auto_now_add=True)
     slug = models.SlugField(max_length=250, unique=True)
