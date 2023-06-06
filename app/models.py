@@ -5,6 +5,7 @@ from functools import partial
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
+from rest_framework.settings import api_settings
 
 from user.models import User
 

@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from app.models import Post, PostLike, Profile, Comment
+from app.pagination import PyNetListPagination
 from app.serializers import (
     PostSerializer,
     PostLikeSerializer,
@@ -22,7 +23,6 @@ from app.serializers import (
     ProfileCreateSerializer,
     ProfileSearchSerializer,
 )
-from app.pagination import PyNetListPagination
 
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -59,9 +59,8 @@ class PostViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         following_profiles = user.profile.following.all()
-        queryset = Post.objects.filter(profile__in=following_profiles).select_related(
-            "owner"
-        ) | Post.objects.filter(profile=user.profile)
+        queryset = Post.objects.filter(Q(profile__in=following_profiles) | Q(profile=user.profile)).select_related(
+            "owner")
         if self.action == "list" and self.request.method == "retrieve":
             profile_pk = self.kwargs["profile_pk"]
             return queryset.filter(profile_id=profile_pk)

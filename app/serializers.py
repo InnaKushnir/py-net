@@ -1,18 +1,13 @@
 from rest_framework import serializers
-
 from app.models import Post, PostLike, Profile, Comment
 
 
 class CommentSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="user.profile.username")
-    created_time = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S")
 
     class Meta:
         model = Comment
         fields = ("id", "owner", "content", "created_time")
-
-    def get_created_time(self, obj):
-        return obj.created_time.strftime("%Y-%m-%dT%H:%M:%S")
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
@@ -30,7 +25,6 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
     unlikes_count = serializers.SerializerMethodField()
-    created_time = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S")
 
     comments = CommentSerializer(many=True)
 

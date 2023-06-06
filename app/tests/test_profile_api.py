@@ -89,9 +89,6 @@ class AuthenticatedProfileApiTests(TestCase):
         self.assertEqual(response.data["profile_id"], self.profile3.id)
 
     def test_profile_search(self):
-
         response = self.client.get(reverse("app:profile-search", kwargs={"username": "name1"}))
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["username"], "Testusername1")
-
