@@ -134,8 +134,10 @@ class ProfileViewSet(viewsets.ModelViewSet):
             ):
                 return ProfileSerializer
             return ProfileNoPostSerializer
-
-        return ProfileSerializer
+        if self.action == "list" and self.request.user.is_authenticated:
+            if self.request.user.is_staff is True:
+                return ProfileSerializer
+            return ProfileNoPostSerializer
 
     @action(detail=True, methods=["post"])
     def follow(self, request, pk=None):
