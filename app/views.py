@@ -22,7 +22,7 @@ from app.serializers import (
     ProfileCreateSerializer,
     ProfileSearchSerializer,
 )
-from pagination import PyNetListPagination
+from app.pagination import PyNetListPagination
 
 
 class IsOwnerOrReadOnly(BasePermission):

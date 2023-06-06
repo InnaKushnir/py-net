@@ -23,7 +23,6 @@ python -m venv venv
 venv/Scripts/activate
 pip install -r requirements.txt
 ```
-* Create new SQLite DB & user
 * Copy .env.sample -> .env and populate with all required data
 ##### Create .env file with values:
 ```
@@ -35,6 +34,9 @@ CELERY_RESULT_BACKEND = <YOUR_CELERY_RESULT_BACKEND>
 ```
 python manage.py migrate
 ```
+#### Use the following command to load prepared data from fixture:
+`python manage.py loaddata test_user_data.json`
+
 * Docker is used to run a Redis container that is used as a broker for Celery.
 ```
 docker run -d -p 6379:6379 redis

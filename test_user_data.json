@@ -1,0 +1,11 @@
+[
+  {
+    "model": "user.User",
+    "pk": 1,
+    "fields": {
+      "email": "admin@gmail.com",
+      "password": "2105Inna75",
+      "is_staff": true
+    }
+  }
+]
