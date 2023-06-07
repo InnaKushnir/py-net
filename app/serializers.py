@@ -124,6 +124,7 @@ class ProfileNoPostSerializer(serializers.ModelSerializer):
             "username",
             "city",
             "birth_date",
+            "avatar",
             "followers_count",
         ]
 

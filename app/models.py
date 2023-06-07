@@ -5,7 +5,7 @@ from functools import partial
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
-from rest_framework.settings import api_settings
+from autoslug import AutoSlugField
 
 from user.models import User
 
@@ -27,6 +27,7 @@ class Profile(models.Model):
         null=True,
         upload_to=partial(post_image_file_path, "profiles"),
     )
+    slug = AutoSlugField(unique=True, populate_from='username')
     city = models.CharField(max_length=63, blank=True, null=True)
     birth_date = models.CharField(max_length=63, blank=True, null=True)
     following = models.ManyToManyField(

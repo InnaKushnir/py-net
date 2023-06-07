@@ -107,7 +107,7 @@ class PostLikeCreateView(generics.CreateAPIView):
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     queryset = Profile.objects.all().select_related("user")
-    permission_classes = (IsUserOrReadOnly, HasProfilePermission)
+    permission_classes = (IsAuthenticated, HasProfilePermission)
     pagination_class = PyNetListPagination
 
     def perform_create(self, serializer):
@@ -133,10 +133,11 @@ class ProfileViewSet(viewsets.ModelViewSet):
             ):
                 return ProfileSerializer
             return ProfileNoPostSerializer
-        if self.action == "list" and self.request.user.is_authenticated:
+        if self.action == ["list"] and self.request.user.is_authenticated:
             if self.request.user.is_staff is True:
                 return ProfileSerializer
             return ProfileNoPostSerializer
+        return ProfileSerializer
 
     @action(detail=True, methods=["post"])
     def follow(self, request, pk=None):

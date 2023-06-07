@@ -37,6 +37,11 @@ python manage.py migrate
 #### Use the following command to load prepared data from fixture:
 `python manage.py loaddata test_user_data.json`
 
+#### Test user
+
+* Email: `admin@gmail.com`
+* Password: `12345admin`
+
 * Docker is used to run a Redis container that is used as a broker for Celery.
 ```
 docker run -d -p 6379:6379 redis
