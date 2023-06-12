@@ -9,6 +9,7 @@ from rest_framework.response import Response
 
 from app.models import Post, PostLike, Profile, Comment
 from app.pagination import PyNetListPagination
+from app.permissions import IsOwnerOrReadOnly, HasProfilePermission, IsUserOrReadOnly
 from app.serializers import (
     PostSerializer,
     PostLikeSerializer,
@@ -23,28 +24,6 @@ from app.serializers import (
     ProfileCreateSerializer,
     ProfileSearchSerializer,
 )
-
-
-class IsOwnerOrReadOnly(BasePermission):
-    def has_object_permission(self, request, view, obj):
-        if request.method in ["GET", "HEAD", "OPTIONS"]:
-            return True
-        return obj.owner == request.user
-
-
-class IsUserOrReadOnly(BasePermission):
-    def has_object_permission(self, request, view, obj):
-        if request.method in ["GET", "HEAD", "OPTIONS"]:
-            return True
-        return obj.user == request.user
-
-
-class HasProfilePermission(BasePermission):
-    message = "User has no profile. Create profile, please."
-
-    def has_permission(self, request, view):
-        user = request.user
-        return hasattr(user, "profile")
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -116,7 +95,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == "follow":
-            return [IsAuthenticated()]
+            return [IsAuthenticated]
         return super().get_permissions()
 
     def get_serializer_class(self):
