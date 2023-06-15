@@ -59,4 +59,17 @@ celery -A py_net beat -l INFO --scheduler django_celery_beat.schedulers:Database
 ```
 python manage.py runserver
 ```
+* Register on the website using the link.
+```
+    http://127.0.0.1:8000/api/user/register/
+```
+* Get the token using the link. 
+```
+    http://127.0.0.1:8000/api/user/token/
+```
+* Create a profile using this link
+```
+    http://127.0.0.1:8000/api/profile/
+```
+
 

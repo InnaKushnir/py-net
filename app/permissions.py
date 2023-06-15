@@ -20,4 +20,8 @@ class HasProfilePermission(BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        return hasattr(user, "profile")
+        if hasattr(user, "profile"):
+            return True
+        # if request.method == "POST" and not hasattr(user, "profile"):
+        #     return True
+        return False

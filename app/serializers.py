@@ -4,10 +4,15 @@ from app.models import Post, PostLike, Profile, Comment
 
 class CommentSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="user.profile.username")
+    post_title = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ("id", "owner", "content", "created_time")
+        fields = ("id", "post_title", "owner", "content", "created_time")
+
+    @staticmethod
+    def get_post_title(obj):
+        return obj.post.title
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
@@ -42,10 +47,12 @@ class PostSerializer(serializers.ModelSerializer):
             "created_time",
         )
 
-    def get_likes_count(self, obj):
+    @staticmethod
+    def get_likes_count(obj):
         return obj.postlikes.filter(status=PostLike.StatusChoices.LIKE).count()
 
-    def get_unlikes_count(self, obj):
+    @staticmethod
+    def get_unlikes_count(obj):
         return obj.postlikes.filter(status=PostLike.StatusChoices.UNLIKE).count()
 
 
@@ -80,7 +87,6 @@ class PostLikeSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     posts = PostSerializer(many=True, read_only=True)
-    is_following = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
@@ -93,10 +99,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             "avatar",
             "posts",
             "followers_count",
-            "is_following",
         ]
 
-    def get_followers_count(self, obj):
+    @staticmethod
+    def get_followers_count(obj):
         return obj.followings.count()
 
     def get_is_following(self, obj):
@@ -128,7 +134,8 @@ class ProfileNoPostSerializer(serializers.ModelSerializer):
             "followers_count",
         ]
 
-    def get_followers_count(self, obj):
+    @staticmethod
+    def get_followers_count(obj):
         return obj.followings.count()
 
     def get_is_following(self, obj):

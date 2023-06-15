@@ -1,11 +1,13 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.views import generic
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import viewsets, generics, filters
+from rest_framework import viewsets, generics, filters, status
 from rest_framework.decorators import action
 from rest_framework.permissions import BasePermission
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from app.models import Post, PostLike, Profile, Comment
 from app.pagination import PyNetListPagination
@@ -37,12 +39,15 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        following_profiles = user.profile.following.all()
-        queryset = Post.objects.filter(Q(profile__in=following_profiles) | Q(profile=user.profile)).select_related(
-            "owner")
-        if self.action == "list" and self.request.method == "retrieve":
-            profile_pk = self.kwargs["profile_pk"]
-            return queryset.filter(profile_id=profile_pk)
+        queryset = Post.objects.all().select_related("owner")
+        if not self.request.user.is_staff:
+            following_profiles = user.profile.following.all()
+            queryset = Post.objects.filter(Q(profile__in=following_profiles) | Q(profile=user.profile)).select_related(
+                "owner")
+
+            if self.action == "list" and self.request.method == "retrieve":
+                profile_pk = self.kwargs["profile_pk"]
+                return queryset.filter(profile_id=profile_pk)
         return queryset
 
     def get_serializer_class(self):
@@ -86,7 +91,7 @@ class PostLikeCreateView(generics.CreateAPIView):
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     queryset = Profile.objects.all().select_related("user")
-    permission_classes = (IsAuthenticated, HasProfilePermission)
+    permission_classes = (IsUserOrReadOnly,)
     pagination_class = PyNetListPagination
 
     def perform_create(self, serializer):
@@ -99,49 +104,66 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_serializer_class(self):
+        if self.action == "list" and self.request.user.is_staff:
+            return ProfileSerializer
+
         if self.action == "create":
             return ProfileCreateSerializer
         if self.action == "follow":
             return ProfileFollowAddSerializer
-        if self.action in ["retrieve"] and self.request.user.is_authenticated:
+        if self.action == "retrieve" and self.request.user.is_authenticated:
             profile = self.get_object()
-            follower = self.request.user.profile
-            if (
-                    profile.followings.filter(id=follower.id).exists()
-                    or profile == follower
-            ):
-                return ProfileSerializer
-            return ProfileNoPostSerializer
-        if self.action == ["list"] and self.request.user.is_authenticated:
-            if self.request.user.is_staff is True:
-                return ProfileSerializer
-            return ProfileNoPostSerializer
-        return ProfileSerializer
+            try:
+                follower = self.request.user.profile
+                if (
+                        profile.followings.filter(id=follower.id).exists()
+                        or profile == follower or self.request.user.is_staff
+                ):
+                    return ProfileSerializer
+            except Exception:
+                return ProfileNoPostSerializer
+
+        return ProfileNoPostSerializer
 
     @action(detail=True, methods=["post"])
     def follow(self, request, pk=None):
         """Endpoint to join the profile followers"""
-        profile = self.get_object()
-        following = request.user.profile
-        profile.followings.add(following)
-        serializer = self.get_serializer(profile, context={"request": request})
-        return Response(serializer.data)
+        try:
+            profile = self.get_object()
+            following = request.user.profile
+            profile.followings.add(following)
+            serializer = self.get_serializer(profile, context={"request": request})
+            return Response(serializer.data)
+        except Profile.DoesNotExist:
+            return Response("Create profile, please.", status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=["get"])
     def followers_list(self, request, pk=None):
         """Endpoint to get the list of followers"""
-        user = self.get_object()
-        followers = user.followings.all()
-        serializer = ProfileSerializer(followers, many=True)
-        return Response(serializer.data)
+        try:
+            if not self.request.user.profile:
+                return Response("Create profile, please.", status=status.HTTP_404_NOT_FOUND)
+            else:
+                user = self.get_object()
+                followers = user.followings.all()
+                serializer = ProfileSerializer(followers, many=True)
+                return Response(serializer.data)
+        except Profile.DoesNotExist:
+            return Response("Create profile, please.", status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=["get"])
     def following_list(self, request, pk=None):
         """Endpoint to get the list of following"""
-        profile = self.get_object()
-        following = profile.following.all()
-        serializer = ProfileSerializer(following, many=True)
-        return Response(serializer.data)
+        try:
+            if not self.request.user.profile:
+                return Response("Create profile, please.", status=status.HTTP_404_NOT_FOUND)
+            else:
+                profile = self.get_object()
+                following = profile.following.all()
+                serializer = ProfileSerializer(following, many=True)
+                return Response(serializer.data)
+        except Profile.DoesNotExist:
+            return Response("Create profile, please.", status=status.HTTP_404_NOT_FOUND)
 
 
 class ProfileSearchView(generics.ListAPIView):
@@ -186,16 +208,21 @@ class CommentCreateView(generics.CreateAPIView):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     queryset = Comment.objects.all().select_related("user")
-    permission_classes = [IsUserOrReadOnly]
+    permission_classes = (IsUserOrReadOnly, HasProfilePermission)
     pagination_class = PyNetListPagination
 
     def get_queryset(self):
-        return Comment.objects.filter(user=self.request.user)
+        user = self.request.user
+        following_profiles = user.profile.following.all()
+        queryset = Comment.objects.filter(
+            Q(post__profile__in=following_profiles) | Q(post__profile=user.profile)
+        )
+        return queryset
 
 
 class LikedPostsView(generics.ListAPIView):
     serializer_class = LikedPostsSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, HasProfilePermission)
     pagination_class = PyNetListPagination
 
     def get_queryset(self):
